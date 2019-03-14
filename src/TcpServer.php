@@ -146,12 +146,13 @@ class TcpServer extends AbstractObject
      * 连接事件
      * @param \Swoole\Server $server
      * @param int $fd
+     * @param int $reactorId
      */
-    public function onConnect(\Swoole\Server $server, int $fd)
+    public function onConnect(\Swoole\Server $server, int $fd, int $reactorId)
     {
         if ($this->_setting['enable_coroutine'] && Coroutine::id() == -1) {
-            xgo(function () use ($server, $fd) {
-                call_user_func([$this, 'onConnect'], $server, $fd);
+            xgo(function () use ($server, $fd, $reactorId) {
+                call_user_func([$this, 'onConnect'], $server, $fd, $reactorId);
             });
             return;
         }
@@ -179,8 +180,8 @@ class TcpServer extends AbstractObject
     public function onReceive(\Swoole\Server $server, int $fd, int $reactorId, string $data)
     {
         if ($this->_setting['enable_coroutine'] && Coroutine::id() == -1) {
-            xgo(function () use ($server, $fd) {
-                call_user_func([$this, 'onReceive'], $server, $fd);
+            xgo(function () use ($server, $fd, $reactorId, $data) {
+                call_user_func([$this, 'onReceive'], $server, $fd, $reactorId, $data);
             });
             return;
         }
@@ -207,7 +208,7 @@ class TcpServer extends AbstractObject
     public function onClose(\Swoole\Server $server, int $fd, int $reactorId)
     {
         if ($this->_setting['enable_coroutine'] && Coroutine::id() == -1) {
-            xgo(function () use ($server, $fd) {
+            xgo(function () use ($server, $fd, $reactorId) {
                 call_user_func([$this, 'onClose'], $server, $fd);
             });
             return;
@@ -221,10 +222,8 @@ class TcpServer extends AbstractObject
             \Mix::$app->error->handleException($e);
         }
         // 清扫组件容器
-        \Mix::$app->cleanComponents();
-        // 开启协程时，移除容器
-        if (($tid = Coroutine::id()) !== -1) {
-            \Mix::$app->container->delete($tid);
+        if (!$this->_setting['enable_coroutine']) {
+            \Mix::$app->cleanComponents();
         }
     }
 
