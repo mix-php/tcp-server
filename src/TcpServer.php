@@ -24,7 +24,7 @@ class TcpServer extends AbstractObject
      * 端口
      * @var int
      */
-    public $port = 9502;
+    public $port = 9503;
 
     /**
      * 应用配置文件
