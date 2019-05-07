@@ -21,9 +21,19 @@ class SwooleEvent
     const MANAGER_START = 'managerStart';
 
     /**
+     * ManagerStop
+     */
+    const MANAGER_STOP = 'managerStop';
+
+    /**
      * WorkerStart
      */
     const WORKER_START = 'workerStart';
+
+    /**
+     * WorkerStop
+     */
+    const WORKER_STOP = 'workerStop';
 
     /**
      * Connect
