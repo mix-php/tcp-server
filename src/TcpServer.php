@@ -50,41 +50,41 @@ class TcpServer extends AbstractObject
      */
     protected $_defaultSetting = [
         // 开启协程
-        'enable_coroutine'    => true,
+        'enable_coroutine'   => true,
         // 主进程事件处理线程数
-        'reactor_num'         => 8,
+        'reactor_num'        => 8,
         // 工作进程数
-        'worker_num'          => 8,
+        'worker_num'         => 8,
         // 任务进程数
-        'task_worker_num'     => 0,
+        'task_worker_num'    => 0,
         // PID 文件
-        'pid_file'            => '/var/run/mix-tcpd.pid',
+        'pid_file'           => '/var/run/mix-tcpd.pid',
         // 日志文件路径
-        'log_file'            => '/tmp/mix-tcpd.log',
+        'log_file'           => '/tmp/mix-tcpd.log',
         // 异步安全重启
-        'reload_async'        => true,
+        'reload_async'       => true,
         // 退出等待时间
-        'max_wait_time'       => 60,
+        'max_wait_time'      => 60,
         // 开启后，PDO 协程多次 prepare 才不会有 40ms 延迟
-        'open_tcp_nodelay'    => true,
+        'open_tcp_nodelay'   => true,
         // 进程的最大任务数
-        'max_request'         => 0,
+        'max_request'        => 0,
         // 主进程启动事件回调
-        'event_start'         => null,
+        'hook_start'         => null,
         // 管理进程启动事件回调
-        'event_manager_start' => null,
+        'hook_manager_start' => null,
         // 管理进程停止事件回调
-        'event_manager_stop'  => null,
+        'hook_manager_stop'  => null,
         // 工作进程启动事件回调
-        'event_worker_start'  => null,
+        'hook_worker_start'  => null,
         // 工作进程停止事件回调
-        'event_worker_stop'   => null,
+        'hook_worker_stop'   => null,
         // 连接事件回调
-        'event_connect'       => null,
+        'hook_connect'       => null,
         // 接收事件回调
-        'event_receive'       => null,
+        'hook_receive'       => null,
         // 关闭事件回调
-        'event_close'         => null,
+        'hook_close'         => null,
     ];
 
     /**
@@ -126,7 +126,7 @@ class TcpServer extends AbstractObject
         // 欢迎信息
         $this->welcome();
         // 执行回调
-        $this->_setting['event_start'] and call_user_func($this->_setting['event_start']);
+        $this->_setting['hook_start'] and call_user_func($this->_setting['hook_start']);
         // 启动
         return $this->_server->start();
     }
@@ -154,7 +154,7 @@ class TcpServer extends AbstractObject
             // 进程命名
             ProcessHelper::setProcessTitle(static::SERVER_NAME . ": manager");
             // 执行回调
-            $this->_setting['event_manager_start'] and call_user_func($this->_setting['event_manager_start']);
+            $this->_setting['hook_manager_start'] and call_user_func($this->_setting['hook_manager_start']);
 
         } catch (\Throwable $e) {
             // 错误处理
@@ -182,7 +182,7 @@ class TcpServer extends AbstractObject
         try {
 
             // 执行回调
-            $this->_setting['event_manager_stop'] and call_user_func($this->_setting['event_manager_stop']);
+            $this->_setting['hook_manager_stop'] and call_user_func($this->_setting['hook_manager_stop']);
 
         } catch (\Throwable $e) {
             // 错误处理
@@ -217,7 +217,7 @@ class TcpServer extends AbstractObject
                 ProcessHelper::setProcessTitle(static::SERVER_NAME . ": task #{$workerId}");
             }
             // 执行回调
-            $this->_setting['event_worker_start'] and call_user_func($this->_setting['event_worker_start']);
+            $this->_setting['hook_worker_start'] and call_user_func($this->_setting['hook_worker_start']);
             // 实例化App
             new \Mix\Tcp\Application(require $this->configFile);
 
@@ -248,7 +248,7 @@ class TcpServer extends AbstractObject
         try {
 
             // 执行回调
-            $this->_setting['event_worker_stop'] and call_user_func($this->_setting['event_worker_stop']);
+            $this->_setting['hook_worker_stop'] and call_user_func($this->_setting['hook_worker_stop']);
 
         } catch (\Throwable $e) {
             // 错误处理
@@ -282,13 +282,13 @@ class TcpServer extends AbstractObject
             // 处理消息
             \Mix::$app->runConnect(\Mix::$app->tcp);
             // 执行回调
-            $this->_setting['event_connect'] and call_user_func($this->_setting['event_connect'], true);
+            $this->_setting['hook_connect'] and call_user_func($this->_setting['hook_connect'], true);
 
         } catch (\Throwable $e) {
             // 错误处理
             \Mix::$app->error->handleException($e);
             // 执行回调
-            $this->_setting['event_connect'] and call_user_func($this->_setting['event_connect'], false);
+            $this->_setting['hook_connect'] and call_user_func($this->_setting['hook_connect'], false);
         } finally {
             // 清扫组件容器(仅同步模式, 协程会在xgo内清扫)
             if (!$this->_setting['enable_coroutine']) {
@@ -319,13 +319,13 @@ class TcpServer extends AbstractObject
             // 处理消息
             \Mix::$app->runReceive(\Mix::$app->tcp, $data);
             // 执行回调
-            $this->_setting['event_receive'] and call_user_func($this->_setting['event_receive'], true);
+            $this->_setting['hook_receive'] and call_user_func($this->_setting['hook_receive'], true);
 
         } catch (\Throwable $e) {
             // 错误处理
             \Mix::$app->error->handleException($e);
             // 执行回调
-            $this->_setting['event_receive'] and call_user_func($this->_setting['event_receive'], false);
+            $this->_setting['hook_receive'] and call_user_func($this->_setting['hook_receive'], false);
         } finally {
             // 清扫组件容器(仅同步模式, 协程会在xgo内清扫)
             if (!$this->_setting['enable_coroutine']) {
@@ -355,13 +355,13 @@ class TcpServer extends AbstractObject
             // 处理连接关闭
             \Mix::$app->runClose(\Mix::$app->tcp);
             // 执行回调
-            $this->_setting['event_close'] and call_user_func($this->_setting['event_close'], true);
+            $this->_setting['hook_close'] and call_user_func($this->_setting['hook_close'], true);
 
         } catch (\Throwable $e) {
             // 错误处理
             \Mix::$app->error->handleException($e);
             // 执行回调
-            $this->_setting['event_close'] and call_user_func($this->_setting['event_close'], false);
+            $this->_setting['hook_close'] and call_user_func($this->_setting['hook_close'], false);
         } finally {
             // 清扫组件容器(仅同步模式, 协程会在xgo内清扫)
             if (!$this->_setting['enable_coroutine']) {
