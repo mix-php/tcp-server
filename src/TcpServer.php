@@ -126,7 +126,7 @@ class TcpServer extends AbstractObject
         // 欢迎信息
         $this->welcome();
         // 执行回调
-        $this->_setting['hook_start'] and call_user_func($this->_setting['hook_start']);
+        $this->_setting['hook_start'] and call_user_func($this->_setting['hook_start'], $this->_server);
         // 启动
         return $this->_server->start();
     }
@@ -154,16 +154,11 @@ class TcpServer extends AbstractObject
             // 进程命名
             ProcessHelper::setProcessTitle(static::SERVER_NAME . ": manager");
             // 执行回调
-            $this->_setting['hook_manager_start'] and call_user_func($this->_setting['hook_manager_start']);
+            $this->_setting['hook_manager_start'] and call_user_func($this->_setting['hook_manager_start'], $server);
 
         } catch (\Throwable $e) {
             // 错误处理
             \Mix::$app->error->handleException($e);
-        } finally {
-            // 清扫组件容器(仅同步模式, 协程会在xgo内清扫)
-            if (!$this->_setting['enable_coroutine']) {
-                \Mix::$app->cleanComponents();
-            }
         }
     }
 
@@ -173,25 +168,14 @@ class TcpServer extends AbstractObject
      */
     public function onManagerStop(\Swoole\Server $server)
     {
-        if ($this->_setting['enable_coroutine'] && Coroutine::id() == -1) {
-            xgo(function () use ($server) {
-                call_user_func([$this, 'onManagerStart'], $server);
-            });
-            return;
-        }
         try {
 
             // 执行回调
-            $this->_setting['hook_manager_stop'] and call_user_func($this->_setting['hook_manager_stop']);
+            $this->_setting['hook_manager_stop'] and call_user_func($this->_setting['hook_manager_stop'], $server);
 
         } catch (\Throwable $e) {
             // 错误处理
             \Mix::$app->error->handleException($e);
-        } finally {
-            // 清扫组件容器(仅同步模式, 协程会在xgo内清扫)
-            if (!$this->_setting['enable_coroutine']) {
-                \Mix::$app->cleanComponents();
-            }
         }
     }
 
@@ -202,12 +186,6 @@ class TcpServer extends AbstractObject
      */
     public function onWorkerStart(\Swoole\Server $server, int $workerId)
     {
-        if ($this->_setting['enable_coroutine'] && Coroutine::id() == -1) {
-            xgo(function () use ($server, $workerId) {
-                call_user_func([$this, 'onWorkerStart'], $server, $workerId);
-            });
-            return;
-        }
         try {
 
             // 进程命名
@@ -217,18 +195,13 @@ class TcpServer extends AbstractObject
                 ProcessHelper::setProcessTitle(static::SERVER_NAME . ": task #{$workerId}");
             }
             // 执行回调
-            $this->_setting['hook_worker_start'] and call_user_func($this->_setting['hook_worker_start']);
+            $this->_setting['hook_worker_start'] and call_user_func($this->_setting['hook_worker_start'], $server);
             // 实例化App
             new \Mix\Tcp\Application(require $this->configFile);
 
         } catch (\Throwable $e) {
             // 错误处理
             \Mix::$app->error->handleException($e);
-        } finally {
-            // 清扫组件容器(仅同步模式, 协程会在xgo内清扫)
-            if (!$this->_setting['enable_coroutine']) {
-                \Mix::$app->cleanComponents();
-            }
         }
     }
 
@@ -239,25 +212,14 @@ class TcpServer extends AbstractObject
      */
     public function onWorkerStop(\Swoole\Server $server, int $workerId)
     {
-        if ($this->_setting['enable_coroutine'] && Coroutine::id() == -1) {
-            xgo(function () use ($server, $workerId) {
-                call_user_func([$this, 'onWorkerStart'], $server, $workerId);
-            });
-            return;
-        }
         try {
 
             // 执行回调
-            $this->_setting['hook_worker_stop'] and call_user_func($this->_setting['hook_worker_stop']);
+            $this->_setting['hook_worker_stop'] and call_user_func($this->_setting['hook_worker_stop'], $server);
 
         } catch (\Throwable $e) {
             // 错误处理
             \Mix::$app->error->handleException($e);
-        } finally {
-            // 清扫组件容器(仅同步模式, 协程会在xgo内清扫)
-            if (!$this->_setting['enable_coroutine']) {
-                \Mix::$app->cleanComponents();
-            }
         }
     }
 
@@ -282,13 +244,13 @@ class TcpServer extends AbstractObject
             // 处理消息
             \Mix::$app->runConnect(\Mix::$app->tcp);
             // 执行回调
-            $this->_setting['hook_connect'] and call_user_func($this->_setting['hook_connect'], true);
+            $this->_setting['hook_connect'] and call_user_func($this->_setting['hook_connect'], true, $server, $fd);
 
         } catch (\Throwable $e) {
             // 错误处理
             \Mix::$app->error->handleException($e);
             // 执行回调
-            $this->_setting['hook_connect'] and call_user_func($this->_setting['hook_connect'], false);
+            $this->_setting['hook_connect'] and call_user_func($this->_setting['hook_connect'], false, $server, $fd);
         } finally {
             // 清扫组件容器(仅同步模式, 协程会在xgo内清扫)
             if (!$this->_setting['enable_coroutine']) {
@@ -319,13 +281,13 @@ class TcpServer extends AbstractObject
             // 处理消息
             \Mix::$app->runReceive(\Mix::$app->tcp, $data);
             // 执行回调
-            $this->_setting['hook_receive'] and call_user_func($this->_setting['hook_receive'], true);
+            $this->_setting['hook_receive'] and call_user_func($this->_setting['hook_receive'], true, $server, $fd);
 
         } catch (\Throwable $e) {
             // 错误处理
             \Mix::$app->error->handleException($e);
             // 执行回调
-            $this->_setting['hook_receive'] and call_user_func($this->_setting['hook_receive'], false);
+            $this->_setting['hook_receive'] and call_user_func($this->_setting['hook_receive'], false, $server, $fd);
         } finally {
             // 清扫组件容器(仅同步模式, 协程会在xgo内清扫)
             if (!$this->_setting['enable_coroutine']) {
@@ -355,13 +317,13 @@ class TcpServer extends AbstractObject
             // 处理连接关闭
             \Mix::$app->runClose(\Mix::$app->tcp);
             // 执行回调
-            $this->_setting['hook_close'] and call_user_func($this->_setting['hook_close'], true);
+            $this->_setting['hook_close'] and call_user_func($this->_setting['hook_close'], true, $server, $fd);
 
         } catch (\Throwable $e) {
             // 错误处理
             \Mix::$app->error->handleException($e);
             // 执行回调
-            $this->_setting['hook_close'] and call_user_func($this->_setting['hook_close'], false);
+            $this->_setting['hook_close'] and call_user_func($this->_setting['hook_close'], false, $server, $fd);
         } finally {
             // 清扫组件容器(仅同步模式, 协程会在xgo内清扫)
             if (!$this->_setting['enable_coroutine']) {
