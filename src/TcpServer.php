@@ -71,14 +71,20 @@ class TcpServer extends AbstractObject
         'max_request'        => 0,
         // 主进程启动事件回调
         'hook_start'         => null,
+        // 主进程停止事件回调
+        'hook_shutdown'      => null,
         // 管理进程启动事件回调
         'hook_manager_start' => null,
+        // 工作进程错误事件
+        'hook_worker_error'  => null,
         // 管理进程停止事件回调
         'hook_manager_stop'  => null,
         // 工作进程启动事件回调
         'hook_worker_start'  => null,
         // 工作进程停止事件回调
         'hook_worker_stop'   => null,
+        // 工作进程退出事件回调
+        'hook_worker_exit'   => null,
         // 连接事件回调
         'hook_connect'       => null,
         // 接收事件回调
@@ -110,16 +116,19 @@ class TcpServer extends AbstractObject
         // 配置参数
         $this->_setting = $this->setting + $this->_defaultSetting;
         $this->_server->set($this->_setting);
-        // 禁用内置协程
+        // 覆盖参数
         $this->_server->set([
-            'enable_coroutine' => false,
+            'enable_coroutine' => false, // 关闭默认协程，回调中有手动开启支持上下文的协程
         ]);
         // 绑定事件
         $this->_server->on(SwooleEvent::START, [$this, 'onStart']);
+        $this->_server->on(SwooleEvent::SHUTDOWN, [$this, 'onShutdown']);
         $this->_server->on(SwooleEvent::MANAGER_START, [$this, 'onManagerStart']);
+        $this->_server->on(SwooleEvent::WORKER_ERROR, [$this, 'onWorkerError']);
         $this->_server->on(SwooleEvent::MANAGER_STOP, [$this, 'onManagerStop']);
         $this->_server->on(SwooleEvent::WORKER_START, [$this, 'onWorkerStart']);
         $this->_server->on(SwooleEvent::WORKER_STOP, [$this, 'onWorkerStop']);
+        $this->_server->on(SwooleEvent::WORKER_EXIT, [$this, 'onWorkerExit']);
         $this->_server->on(SwooleEvent::CONNECT, [$this, 'onConnect']);
         $this->_server->on(SwooleEvent::RECEIVE, [$this, 'onReceive']);
         $this->_server->on(SwooleEvent::CLOSE, [$this, 'onClose']);
@@ -143,6 +152,24 @@ class TcpServer extends AbstractObject
     }
 
     /**
+     * 主进程停止事件
+     * 请勿在onShutdown中调用任何异步或协程相关API，触发onShutdown时底层已销毁了所有事件循环设施
+     * @param \Swoole\Server $server
+     */
+    public function onShutdown(\Swoole\Server $server)
+    {
+        try {
+
+            // 执行回调
+            $this->_setting['hook_shutdown'] and call_user_func($this->_setting['hook_shutdown'], $server);
+
+        } catch (\Throwable $e) {
+            // 错误处理
+            \Mix::$app->error->handleException($e);
+        }
+    }
+
+    /**
      * 管理进程启动事件
      * 可以使用基于信号实现的同步模式定时器swoole_timer_tick，不能使用task、async、coroutine等功能
      * @param \Swoole\Server $server
@@ -155,6 +182,24 @@ class TcpServer extends AbstractObject
             ProcessHelper::setProcessTitle(static::SERVER_NAME . ": manager");
             // 执行回调
             $this->_setting['hook_manager_start'] and call_user_func($this->_setting['hook_manager_start'], $server);
+
+        } catch (\Throwable $e) {
+            // 错误处理
+            \Mix::$app->error->handleException($e);
+        }
+    }
+
+    /**
+     * 工作进程错误事件
+     * 当Worker/Task进程发生异常后会在Manager进程内回调此函数。
+     * @param \Swoole\Server $server
+     */
+    public function onWorkerError(\Swoole\Server $server, int $workerId, int $workerPid, int $exitCode, int $signal)
+    {
+        try {
+
+            // 执行回调
+            $this->_setting['hook_worker_error'] and call_user_func($this->_setting['hook_worker_error'], $server, $workerId, $workerPid, $exitCode, $signal);
 
         } catch (\Throwable $e) {
             // 错误处理
@@ -216,6 +261,24 @@ class TcpServer extends AbstractObject
 
             // 执行回调
             $this->_setting['hook_worker_stop'] and call_user_func($this->_setting['hook_worker_stop'], $server);
+
+        } catch (\Throwable $e) {
+            // 错误处理
+            \Mix::$app->error->handleException($e);
+        }
+    }
+
+    /**
+     * 工作进程退出事件
+     * 仅在开启reload_async特性后有效。异步重启特性，会先创建新的Worker进程处理新请求，旧的Worker进程自行退出
+     * @param \Swoole\Server $server
+     */
+    public function onWorkerExit(\Swoole\Server $server, int $workerId)
+    {
+        try {
+
+            // 执行回调
+            $this->_setting['hook_worker_exit'] and call_user_func($this->_setting['hook_worker_exit'], $server, $workerId);
 
         } catch (\Throwable $e) {
             // 错误处理

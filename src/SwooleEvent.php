@@ -9,16 +9,26 @@ namespace Mix\Tcp\Server;
  */
 class SwooleEvent
 {
-
+    
     /**
      * Start
      */
     const START = 'start';
 
     /**
+     * Shutdown
+     */
+    const SHUTDOWN = 'shutdown';
+
+    /**
      * ManagerStart
      */
     const MANAGER_START = 'managerStart';
+
+    /**
+     * WorkerError
+     */
+    const WORKER_ERROR = 'workerError';
 
     /**
      * ManagerStop
@@ -34,6 +44,11 @@ class SwooleEvent
      * WorkerStop
      */
     const WORKER_STOP = 'workerStop';
+
+    /**
+     * WorkerExit
+     */
+    const WORKER_EXIT = 'workerExit';
 
     /**
      * Connect
