@@ -122,6 +122,32 @@ class TcpServer extends AbstractServer
     }
 
     /**
+     * 工作进程启动事件
+     * @param \Swoole\Server $server
+     * @param int $workerId
+     */
+    public function onWorkerStart(\Swoole\Server $server, int $workerId)
+    {
+        try {
+
+            // 进程命名
+            if ($workerId < $server->setting['worker_num']) {
+                ProcessHelper::setProcessTitle(static::SERVER_NAME . ": worker #{$workerId}");
+            } else {
+                ProcessHelper::setProcessTitle(static::SERVER_NAME . ": task #{$workerId}");
+            }
+            // 执行回调
+            $this->setting['hook_worker_start'] and call_user_func($this->setting['hook_worker_start'], $server);
+            // 实例化App
+            new \Mix\Tcp\Application(require $this->configFile);
+
+        } catch (\Throwable $e) {
+            // 错误处理
+            \Mix::$app->error->handleException($e);
+        }
+    }
+
+    /**
      * 连接事件
      * @param \Swoole\Server $server
      * @param int $fd
