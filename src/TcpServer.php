@@ -19,7 +19,7 @@ class TcpServer extends AbstractServer
      * 服务名称
      * @var string
      */
-    const SERVER_NAME = 'mix-tcpd';
+    public $name = 'mix-tcpd';
 
     /**
      * 主机
@@ -132,9 +132,9 @@ class TcpServer extends AbstractServer
 
             // 进程命名
             if ($workerId < $server->setting['worker_num']) {
-                ProcessHelper::setProcessTitle(static::SERVER_NAME . ": worker #{$workerId}");
+                ProcessHelper::setProcessTitle($this->name . ": worker #{$workerId}");
             } else {
-                ProcessHelper::setProcessTitle(static::SERVER_NAME . ": task #{$workerId}");
+                ProcessHelper::setProcessTitle($this->name . ": task #{$workerId}");
             }
             // 执行回调
             $this->setting['hook_worker_start'] and call_user_func($this->setting['hook_worker_start'], $server);
