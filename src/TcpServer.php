@@ -102,17 +102,17 @@ class TcpServer extends AbstractServer
             'enable_coroutine' => false, // 关闭默认协程，回调中有手动开启支持上下文的协程
         ]);
         // 绑定事件
-        $this->server->on(SwooleEvent::START, [$this, 'onStart']);
-        $this->server->on(SwooleEvent::SHUTDOWN, [$this, 'onShutdown']);
-        $this->server->on(SwooleEvent::MANAGER_START, [$this, 'onManagerStart']);
-        $this->server->on(SwooleEvent::WORKER_ERROR, [$this, 'onWorkerError']);
-        $this->server->on(SwooleEvent::MANAGER_STOP, [$this, 'onManagerStop']);
-        $this->server->on(SwooleEvent::WORKER_START, [$this, 'onWorkerStart']);
-        $this->server->on(SwooleEvent::WORKER_STOP, [$this, 'onWorkerStop']);
-        $this->server->on(SwooleEvent::WORKER_EXIT, [$this, 'onWorkerExit']);
-        $this->server->on(SwooleEvent::CONNECT, [$this, 'onConnect']);
-        $this->server->on(SwooleEvent::RECEIVE, [$this, 'onReceive']);
-        $this->server->on(SwooleEvent::CLOSE, [$this, 'onClose']);
+        $this->server->on(Event::START, [$this, 'onStart']);
+        $this->server->on(Event::SHUTDOWN, [$this, 'onShutdown']);
+        $this->server->on(Event::MANAGER_START, [$this, 'onManagerStart']);
+        $this->server->on(Event::WORKER_ERROR, [$this, 'onWorkerError']);
+        $this->server->on(Event::MANAGER_STOP, [$this, 'onManagerStop']);
+        $this->server->on(Event::WORKER_START, [$this, 'onWorkerStart']);
+        $this->server->on(Event::WORKER_STOP, [$this, 'onWorkerStop']);
+        $this->server->on(Event::WORKER_EXIT, [$this, 'onWorkerExit']);
+        $this->server->on(Event::CONNECT, [$this, 'onConnect']);
+        $this->server->on(Event::RECEIVE, [$this, 'onReceive']);
+        $this->server->on(Event::CLOSE, [$this, 'onClose']);
         // 欢迎信息
         $this->welcome();
         // 执行回调
