@@ -2,7 +2,7 @@
 
 namespace Mix\Tcp\Server;
 
-use Mix\Core\Coroutine;
+use Mix\Concurrent\Coroutine;
 use Mix\Helper\ProcessHelper;
 use Mix\Server\Event;
 use Mix\Server\AbstractServer;
