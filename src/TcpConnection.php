@@ -2,6 +2,7 @@
 
 namespace Mix\Tcp\Server;
 
+use Mix\Tcp\Server\Exception\ReceiveException;
 use Swoole\Coroutine\Server\Connection;
 use Swoole\Coroutine\Socket;
 
@@ -40,7 +41,13 @@ class TcpConnection
      */
     public function recv()
     {
-        return $this->swooleConnection->recv();
+        $data   = $this->swooleConnection->recv();
+        $socket = $this->getSocket();
+        if ($socket->errCode != 0 || $socket->errMsg != '') {
+            $this->connectionManager->remove($socket->fd);
+            throw new ReceiveException($socket->errMsg, $socket->errCode);
+        }
+        return $data;
     }
 
     /**
@@ -59,8 +66,7 @@ class TcpConnection
      */
     public function close()
     {
-        $fd = $this->getSocket()->fd;
-        $this->connectionManager->remove($fd);
+        $this->remove();
         return $this->swooleConnection->close();
     }
 
@@ -71,6 +77,16 @@ class TcpConnection
     public function getSocket()
     {
         return $this->swooleConnection->socket;
+    }
+
+    /**
+     * Remove
+     * @param int $fd
+     */
+    protected function remove()
+    {
+        $fd = $this->getSocket()->fd;
+        $this->connectionManager->remove($fd);
     }
 
 }
