@@ -34,6 +34,11 @@ class TcpServer
     public $swooleServer;
 
     /**
+     * @var TcpConnectionManager
+     */
+    public $connectionManager;
+
+    /**
      * HttpServer constructor.
      * @param string $host
      * @param int $port
@@ -41,10 +46,11 @@ class TcpServer
      */
     public function __construct(string $host, int $port, bool $ssl)
     {
-        $this->host         = $host;
-        $this->port         = $port;
-        $this->ssl          = $ssl;
-        $this->swooleServer = new Server($host, $port, $ssl);
+        $this->host              = $host;
+        $this->port              = $port;
+        $this->ssl               = $ssl;
+        $this->swooleServer      = new Server($host, $port, $ssl);
+        $this->connectionManager = new TcpConnectionManager();
     }
 
     /**
@@ -62,10 +68,12 @@ class TcpServer
      */
     public function handle(callable $callback)
     {
-        return $this->swooleServer->handle(function (Connection $conn) use ($callback) {
+        return $this->swooleServer->handle(function (Connection $connection) use ($callback) {
             try {
                 // 生成连接
-                $connection = new TcpConnection($conn);
+                $connection = new TcpConnection($connection, $this->connectionManager);
+                $fd         = $connection->getSocket()->fd;
+                $this->connectionManager->withConnection($fd, $connection);
                 // 执行回调
                 call_user_func($callback, $connection);
             } catch (\Throwable $e) {
@@ -95,7 +103,9 @@ class TcpServer
      */
     public function shutdown()
     {
-        return $this->swooleServer->shutdown();
+        $status = $this->swooleServer->shutdown();
+        $this->connectionManager->closeAll();
+        return $status;
     }
 
 }

@@ -3,6 +3,7 @@
 namespace Mix\Tcp\Server;
 
 use Swoole\Coroutine\Server\Connection;
+use Swoole\Coroutine\Socket;
 
 /**
  * Class TcpConnection
@@ -18,12 +19,19 @@ class TcpConnection
     public $swooleConnection;
 
     /**
-     * TcpConnection constructor.
-     * @param Connection $conn
+     * @var TcpConnectionManager
      */
-    public function __construct(Connection $conn)
+    public $connectionManager;
+
+    /**
+     * TcpConnection constructor.
+     * @param Connection $connection
+     * @param TcpConnectionManager $connectionManager
+     */
+    public function __construct(Connection $connection, TcpConnectionManager $connectionManager)
     {
-        $this->swooleConnection = $conn;
+        $this->swooleConnection  = $connection;
+        $this->connectionManager = $connectionManager;
     }
 
     /**
@@ -51,7 +59,18 @@ class TcpConnection
      */
     public function close()
     {
+        $fd = $this->getSocket()->fd;
+        $this->connectionManager->remove($fd);
         return $this->swooleConnection->close();
+    }
+
+    /**
+     * Get socket
+     * @return Socket
+     */
+    public function getSocket()
+    {
+        return $this->swooleConnection->socket;
     }
 
 }
