@@ -48,7 +48,7 @@ class TcpServer
     }
 
     /**
-     * set
+     * Set
      * @param array $options
      */
     public function set(array $options)
@@ -57,7 +57,7 @@ class TcpServer
     }
 
     /**
-     * handle
+     * Handle
      * @param callable $callback
      */
     public function handle(callable $callback)
@@ -83,7 +83,7 @@ class TcpServer
     }
 
     /**
-     * start
+     * Start
      */
     public function start()
     {
@@ -91,7 +91,7 @@ class TcpServer
     }
 
     /**
-     * shutdown
+     * Shutdown
      */
     public function shutdown()
     {
