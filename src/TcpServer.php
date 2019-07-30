@@ -73,7 +73,7 @@ class TcpServer
                 // 生成连接
                 $connection = new TcpConnection($connection, $this->connectionManager);
                 $fd         = $connection->getSocket()->fd;
-                $this->connectionManager->withConnection($fd, $connection);
+                $this->connectionManager->add($fd, $connection);
                 // 执行回调
                 call_user_func($callback, $connection);
             } catch (\Throwable $e) {
