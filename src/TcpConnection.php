@@ -44,7 +44,7 @@ class TcpConnection
         $data   = $this->swooleConnection->recv();
         $socket = $this->getSocket();
         if ($socket->errCode != 0 || $socket->errMsg != '') {
-            $this->connectionManager->remove($socket->fd);
+            $this->close();
             throw new ReceiveException($socket->errMsg, $socket->errCode);
         }
         return $data;
