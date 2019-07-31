@@ -1,12 +1,6 @@
 ## Mix Tcp Server
 
-...
-
-## Usage
-
-```
-composer require mix/tcp-server
-```
+v2.1 has been deprecated
 
 ## License
 
