@@ -24,17 +24,7 @@ class TcpConnectionManager
     {
         $this->connections[$fd] = $connection;
     }
-
-    /**
-     * 获取连接
-     * @param int $fd
-     * @return TcpConnection
-     */
-    public function getConnection(int $fd)
-    {
-        return $this->connections[$fd];
-    }
-
+    
     /**
      * 移除连接
      * @param int $fd
@@ -42,16 +32,6 @@ class TcpConnectionManager
     public function remove(int $fd)
     {
         unset($this->connections[$fd]);
-    }
-
-    /**
-     * 关闭连接
-     * @param int $fd
-     */
-    public function close(int $fd)
-    {
-        $connection = $this->getConnection($fd);
-        $connection->close();
     }
 
     /**

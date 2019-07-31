@@ -66,7 +66,8 @@ class TcpConnection
      */
     public function close()
     {
-        $this->remove();
+        $fd = $this->getSocket()->fd;
+        $this->connectionManager->remove($fd);
         return $this->swooleConnection->close();
     }
 
@@ -77,16 +78,6 @@ class TcpConnection
     public function getSocket()
     {
         return $this->swooleConnection->socket;
-    }
-
-    /**
-     * Remove
-     * @param int $fd
-     */
-    protected function remove()
-    {
-        $fd = $this->getSocket()->fd;
-        $this->connectionManager->remove($fd);
     }
 
 }
